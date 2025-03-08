@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="snake-game.css">
+    <title>Snake Game</title>
+    
+</head>
+<body>
+    <div class="game-container">
+        <button class="dark-mode-toggle" id="darkModeToggle">Toggle Dark Mode</button>
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div class="game-info">
+            <div>Score: <span id="score">0</span></div>
+            <div>Level: <span id="level">1</span></div>
+            <div>Coins Left: <span id="coinsLeft">5</span></div>
+        </div>
+        <button class="start-btn" id="startBtn">Start Game</button>
+    </div>
+    <script src="snake-game.js"></script>
+</body>
+</html>
