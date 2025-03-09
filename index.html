@@ -2,8 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link rel="stylesheet" href="snake-game.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
     <title>Snake Game</title>
 </head>
 <body>
@@ -21,6 +24,7 @@
                     <option value="easy">Easy</option>
                     <option value="normal" selected>Normal</option>
                     <option value="hard">Hard</option>
+                    <option value="extreme">Extreme</option>
                 </select>
             </div>
             <div class="setting-row">
@@ -28,10 +32,22 @@
                 <input type="checkbox" id="gridToggle" checked>
             </div>
             <div class="setting-row">
+                <label for="snakeColorPicker">Snake Color:</label>
+                <input type="color" id="snakeColorPicker" value="#32CD32">
+            </div>
+            <div class="setting-row">
                 <button class="dark-mode-toggle" id="darkModeToggle">Toggle Dark Mode</button>
             </div>
             <div class="setting-row">
                 <button id="muteBtn">🔊 Mute</button>
+            </div>
+        </div>
+        
+        <div class="game-overlay" id="gameOverlay">
+            <div class="message-container">
+                <h2 id="overlayMessage">Game Over</h2>
+                <p id="finalScore">Score: 0</p>
+                <button id="restartBtn">Play Again</button>
             </div>
         </div>
         
@@ -59,10 +75,32 @@
         <button class="start-btn pulse-animation" id="startBtn">Start Game</button>
         
         <div class="controls-hint">
-            <p>Use arrow keys or WASD to control the snake. Press P to pause.</p>
+            <p>Use arrow keys or WASD to control the snake. </p>
+               <p>Press P to pause.</p> 
         </div>
-    
+        <div class="touch-hint" id="touchHint">
+            Swipe to control the snake
+        </div>
+
+        <div class="mobile-controls" id="mobileControls">
+            <button class="control-btn up-btn" id="upBtn">▲</button>
+            <div class="horizontal-controls">
+                <button class="control-btn left-btn" id="leftBtn">◄</button>
+                <button class="control-btn right-btn" id="rightBtn">►</button>
+            </div>
+            <button class="control-btn down-btn" id="downBtn">▼</button>
+        </div>
+        
+        <div class="powerup-indicator" id="powerupIndicator">
+            <div class="powerup-icon">⚡</div>
+            <div class="powerup-timer" id="powerupTimer"></div>
+        </div>
     </div>
+    
+    <div class="swipe-feedback feedback-up" id="swipeFeedbackUp"></div>
+    <div class="swipe-feedback feedback-down" id="swipeFeedbackDown"></div>
+    <div class="swipe-feedback feedback-left" id="swipeFeedbackLeft"></div>
+    <div class="swipe-feedback feedback-right" id="swipeFeedbackRight"></div>
     
     <script src="snake-game.js"></script>
 </body>

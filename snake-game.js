@@ -1,60 +1,125 @@
-const canvas = document.getElementById('gameCanvas');
-const ctx = canvas.getContext('2d');
-const scoreElement = document.getElementById('score');
-const levelElement = document.getElementById('level');
-const coinsLeftElement = document.getElementById('coinsLeft');
-const startBtn = document.getElementById('startBtn');
-const highScoreElement = document.getElementById('highScore');
+// Game constants
+const GRID_SIZE = 20;
+const GRID_COUNT = 20;
+const INITIAL_SNAKE_LENGTH = 3;
+const FOOD_TYPES = {
+    REGULAR: { value: 1, color: '#FF0000' },
+    BONUS: { value: 3, color: '#FFA500' },
+    SPECIAL: { value: 5, color: '#FFFF00' }
+};
+const OBSTACLE_COLOR = '#808080';
+const COIN_COLOR = '#FFD700';
+const POWERUP_TYPES = {
+    SPEED: { name: 'Speed Boost', icon: '⚡', duration: 5000, color: '#00FFFF' },
+    SLOW: { name: 'Slow Motion', icon: '🐢', duration: 7000, color: '#9370DB' },
+    GHOST: { name: 'Ghost Mode', icon: '👻', duration: 6000, color: '#FFFFFF' },
+    MAGNET: { name: 'Coin Magnet', icon: '🧲', duration: 8000, color: '#FF00FF' }
+};
 
-const gridSize = 20;
-const initialSnakeLength = 3;
-const coinsPerLevel = 5;
-
+let canvas, ctx;
 let snake = [];
 let direction = 'right';
 let nextDirection = 'right';
-let coin = { x: 0, y: 0 };
-let specialCoin = { x: -1, y: -1, active: false, timer: 0 };
+let food = null;
+let obstacles = [];
+let coins = [];
+let powerups = [];
 let score = 0;
+let highScore = 0;
 let level = 1;
-let coinsLeft = coinsPerLevel;
-let gameSpeed = 150;
-let gameInterval;
-let animationFrame;
-let gameRunning = false;
-let particles = [];
-let lastFrameTime = 0;
-let highScore = localStorage.getItem('snakeHighScore') || 0;
-let powerUp = { active: false, type: null, x: -1, y: -1, duration: 0 };
+let coinsLeft = 5;
+let isGameRunning = false;
+let isPaused = false;
+let interval;
+let gameSpeed = 100;
+let showGrid = true;
+let gameOver = false;
+let lastRenderTime = 0;
+let darkMode = localStorage.getItem('darkMode') === 'true';
+let isMuted = localStorage.getItem('isMuted') === 'true';
+let powerupActive = null;
+let powerupTimeout;
+let snakeColor = localStorage.getItem('snakeColor') || '#32CD32';
+let difficultyLevel = localStorage.getItem('difficulty') || 'normal';
+let swipeStartX, swipeStartY;
+let touchDevice = ('ontouchstart' in window);
 
-const sounds = {
-    eat: new Audio('https://assets.mixkit.co/active_storage/sfx/2253/2253-preview.mp3'),
-    levelUp: new Audio('https://assets.mixkit.co/active_storage/sfx/270/270-preview.mp3'),
-    gameOver: new Audio('https://assets.mixkit.co/active_storage/sfx/209/209-preview.mp3'),
-    powerUp: new Audio('https://assets.mixkit.co/active_storage/sfx/2041/2041-preview.mp3')
+const gameCanvas = document.getElementById('gameCanvas');
+const scoreElement = document.getElementById('score');
+const levelElement = document.getElementById('level');
+const coinsLeftElement = document.getElementById('coinsLeft');
+const highScoreElement = document.getElementById('highScore');
+const startBtn = document.getElementById('startBtn');
+const settingsBtn = document.getElementById('settingsBtn');
+const settingsPanel = document.getElementById('settingsPanel');
+const darkModeToggle = document.getElementById('darkModeToggle');
+const muteBtn = document.getElementById('muteBtn');
+const gridToggle = document.getElementById('gridToggle');
+const difficultySelect = document.getElementById('difficulty');
+const snakeColorPicker = document.getElementById('snakeColorPicker');
+const gameOverlay = document.getElementById('gameOverlay');
+const overlayMessage = document.getElementById('overlayMessage');
+const finalScore = document.getElementById('finalScore');
+const restartBtn = document.getElementById('restartBtn');
+const touchHint = document.getElementById('touchHint');
+const mobileControls = document.getElementById('mobileControls');
+const powerupIndicator = document.getElementById('powerupIndicator');
+const powerupTimer = document.getElementById('powerupTimer');
+const swipeFeedbacks = {
+    up: document.getElementById('swipeFeedbackUp'),
+    down: document.getElementById('swipeFeedbackDown'),
+    left: document.getElementById('swipeFeedbackLeft'),
+    right: document.getElementById('swipeFeedbackRight')
 };
 
-Object.values(sounds).forEach(sound => {
-    sound.volume = 0.3;
-});
+const upBtn = document.getElementById('upBtn');
+const downBtn = document.getElementById('downBtn');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
 
+const sounds = {
+    eat: new Audio('https://assets.codepen.io/21542/pop-up-on.mp3'),
+    bonus: new Audio('https://assets.codepen.io/21542/pop-down-on.mp3'),
+    gameOver: new Audio('https://assets.codepen.io/21542/whistle-start.mp3'),
+    levelUp: new Audio('https://assets.codepen.io/21542/select.mp3'),
+    powerup: new Audio('https://assets.codepen.io/21542/notification-up.mp3')
+};
 
-function initGame() {
-    if (animationFrame) {
-        cancelAnimationFrame(animationFrame);
+// Initialize the game
+function init() {
+    canvas = gameCanvas;
+    ctx = canvas.getContext('2d');
+
+    loadSettings();
+
+    if (darkMode) {
+        document.body.classList.add('dark-mode');
     }
 
-    snake = [];
-    direction = 'right';
-    nextDirection = 'right';
-    score = 0;
-    level = 1;
-    coinsLeft = coinsPerLevel;
-    isPaused = false;
-    const difficulty = difficultySelect.value;
-    switch (difficulty) {
+    difficultySelect.value = difficultyLevel;
+    updateGameSpeed();
+
+    snakeColorPicker.value = snakeColor;
+
+    setupEventListeners();
+
+    render();
+
+    highScoreElement.textContent = highScore;
+}
+
+function loadSettings() {
+    highScore = parseInt(localStorage.getItem('highScore')) || 0;
+    showGrid = localStorage.getItem('showGrid') !== 'false';
+    gridToggle.checked = showGrid;
+
+    updateMuteButton();
+}
+
+function updateGameSpeed() {
+    switch (difficultyLevel) {
         case 'easy':
-            gameSpeed = 170;
+            gameSpeed = 180;
             break;
         case 'normal':
             gameSpeed = 150;
@@ -62,983 +127,945 @@ function initGame() {
         case 'hard':
             gameSpeed = 130;
             break;
-    }
-
-    particles = [];
-    specialCoin = { x: -1, y: -1, active: false, timer: 0 };
-    powerUp = { active: false, type: null, x: -1, y: -1, duration: 0 };
-
-    for (let i = 0; i < initialSnakeLength; i++) {
-        snake.push({
-            x: Math.floor(canvas.width / (2 * gridSize)) * gridSize - i * gridSize,
-            y: Math.floor(canvas.height / (2 * gridSize)) * gridSize
-        });
-    }
-
-    placeCoin();
-
-    updateScore();
-
-    draw();
-
-    gameRunning = true;
-
-    lastFrameTime = performance.now();
-    animationFrame = requestAnimationFrame(animateGame);
-
-    startBtn.style.display = 'none';
-}
-
-function placeCoin() {
-    let coinPlaced = false;
-
-    while (!coinPlaced) {
-        coin = {
-            x: Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize,
-            y: Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize
-        };
-
-        let onObject = false;
-        for (let i = 0; i < snake.length; i++) {
-            if (snake[i].x === coin.x && snake[i].y === coin.y) {
-                onObject = true;
-                break;
-            }
-        }
-
-        if (specialCoin.active && coin.x === specialCoin.x && coin.y === specialCoin.y) {
-            onObject = true;
-        }
-
-        if (powerUp.active && coin.x === powerUp.x && coin.y === powerUp.y) {
-            onObject = true;
-        }
-
-        if (!onObject) {
-            coinPlaced = true;
-        }
+        case 'extreme':
+            gameSpeed = 80;
+            break;
     }
 }
 
-function placeSpecialCoin() {
-    if (specialCoin.active) return;
+function setupEventListeners() {
+    document.addEventListener('keydown', handleKeyPress);
 
-    if (Math.random() < 0.333) {
-        specialCoin.active = true;
-        specialCoin.timer = 150;
+    startBtn.addEventListener('click', startGame);
+    settingsBtn.addEventListener('click', toggleSettings);
+    darkModeToggle.addEventListener('click', toggleDarkMode);
+    muteBtn.addEventListener('click', toggleMute);
+    gridToggle.addEventListener('change', toggleGrid);
+    difficultySelect.addEventListener('change', changeDifficulty);
+    snakeColorPicker.addEventListener('change', changeSnakeColor);
+    restartBtn.addEventListener('click', startGame);
 
-        let coinPlaced = false;
-        while (!coinPlaced) {
-            specialCoin.x = Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize;
-            specialCoin.y = Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize;
+    if (touchDevice) {
+        setupTouchControls();
+    }
 
-            let onObject = false;
-            for (let i = 0; i < snake.length; i++) {
-                if (snake[i].x === specialCoin.x && snake[i].y === specialCoin.y) {
-                    onObject = true;
-                    break;
-                }
-            }
+    upBtn.addEventListener('click', () => changeDirection('up'));
+    downBtn.addEventListener('click', () => changeDirection('down'));
+    leftBtn.addEventListener('click', () => changeDirection('left'));
+    rightBtn.addEventListener('click', () => changeDirection('right'));
 
-            if (coin.x === specialCoin.x && coin.y === specialCoin.y) {
-                onObject = true;
-            }
+    window.addEventListener('resize', adjustCanvasSize);
 
-            if (powerUp.active && specialCoin.x === powerUp.x && specialCoin.y === powerUp.y) {
-                onObject = true;
-            }
-
-            if (!onObject) {
-                coinPlaced = true;
-            }
+    document.addEventListener('touchmove', function (e) {
+        if (isGameRunning) {
+            e.preventDefault();
         }
+    }, { passive: false });
+}
+
+function setupTouchControls() {
+    if (touchDevice) {
+        touchHint.style.display = 'block';
+        mobileControls.style.display = 'flex';
+    }
+
+    document.addEventListener('touchstart', handleTouchStart, false);
+    document.addEventListener('touchmove', handleTouchMove, false);
+    document.addEventListener('touchend', handleTouchEnd, false);
+}
+
+function adjustCanvasSize() {
+    if (window.innerWidth < 500) {
+        const size = Math.min(window.innerWidth - 40, 400);
+        canvas.width = size;
+        canvas.height = size;
     }
 }
 
-function placePowerUp() {
-    if (powerUp.active || level < 2) return;
-
-    if (Math.random() < 0.2) {
-        powerUp.active = true;
-        powerUp.duration = 0;
-
-        const types = ['speed', 'slowdown', 'shield'];
-        powerUp.type = types[Math.floor(Math.random() * types.length)];
-
-        let powerUpPlaced = false;
-        while (!powerUpPlaced) {
-            powerUp.x = Math.floor(Math.random() * (canvas.width / gridSize)) * gridSize;
-            powerUp.y = Math.floor(Math.random() * (canvas.height / gridSize)) * gridSize;
-
-            let onObject = false;
-            for (let i = 0; i < snake.length; i++) {
-                if (snake[i].x === powerUp.x && snake[i].y === powerUp.y) {
-                    onObject = true;
-                    break;
-                }
-            }
-
-            if (coin.x === powerUp.x && coin.y === powerUp.y) {
-                onObject = true;
-            }
-
-            if (specialCoin.active && powerUp.x === specialCoin.x && powerUp.y === specialCoin.y) {
-                onObject = true;
-            }
-
-            if (!onObject) {
-                powerUpPlaced = true;
-            }
-        }
-    }
-}
-
-let scoreUpdateCounter = 0;
-function updateScore() {
-    scoreUpdateCounter++;
-    if (scoreUpdateCounter % 3 !== 0 && gameRunning) return;
-
-    scoreElement.textContent = score;
-    levelElement.textContent = level;
-    coinsLeftElement.textContent = coinsLeft;
-
-    if (score > highScore) {
-        highScore = score;
-        localStorage.setItem('snakeHighScore', highScore);
-        highScoreElement.textContent = highScore;
-    }
-}
-function createParticles(x, y, color, count = 15) {
-    const isLowPerformance = window.performance &&
-        window.performance.now &&
-        performance.now() - lastFrameTime > 20;
-
-    const actualCount = isLowPerformance ? Math.floor(count / 3) : count;
-
-    if (particles.length > 100) {
-        count = Math.min(5, count);
-    }
-
-    for (let i = 0; i < actualCount; i++) {
-        particles.push({
-            x: x + gridSize / 2,
-            y: y + gridSize / 2,
-            size: Math.random() * 3 + 2,
-            color: color,
-            vx: Math.random() * 6 - 3,
-            vy: Math.random() * 6 - 3,
-            life: Math.random() * 30 + 10
-        });
-    }
-}
-
-function updateParticles() {
-    if (window.performance && performance.now() - lastFrameTime > 30) {
-        particles = particles.filter(p => p.life > 0);
+function handleKeyPress(e) {
+    if (!isGameRunning && e.key !== 'p' && e.key !== 'P') {
+        startGame();
         return;
     }
 
-    for (let i = particles.length - 1; i >= 0; i--) {
-        particles[i].x += particles[i].vx;
-        particles[i].y += particles[i].vy;
-        particles[i].life--;
-
-        particles[i].vy += 0.05;
-        particles[i].vx *= 0.99;
-        particles[i].vy *= 0.99;
-
-        if (particles[i].life <= 0) {
-            particles.splice(i, 1);
-        }
-    }
-}
-
-
-function animateGame(timestamp = 0) {
-    if (!gameRunning || isPaused) return;
-
-    animationFrame = requestAnimationFrame(animateGame);
-
-    const deltaTime = timestamp - lastFrameTime;
-
-    const FRAME_STEP = gameSpeed;
-
-    if (deltaTime >= FRAME_STEP) {
-        const updateSteps = Math.min(Math.floor(deltaTime / FRAME_STEP), 3);
-
-        for (let i = 0; i < updateSteps; i++) {
-            updateGame();
-        }
-
-        lastFrameTime = timestamp - (deltaTime % FRAME_STEP);
-    }
-
-    draw();
-}
-function updateGame() {
-    if (isPaused) return;
-
-    const head = { x: snake[0].x, y: snake[0].y };
-
-    direction = nextDirection;
-
-    switch (direction) {
-        case 'up':
-            head.y -= gridSize;
-            break;
-        case 'down':
-            head.y += gridSize;
-            break;
-        case 'left':
-            head.x -= gridSize;
-            break;
-        case 'right':
-            head.x += gridSize;
-            break;
-    }
-
-    if (head.x < 0) head.x = canvas.width - gridSize;
-    if (head.x >= canvas.width) head.x = 0;
-    if (head.y < 0) head.y = canvas.height - gridSize;
-    if (head.y >= canvas.height) head.y = 0;
-
-    if (!powerUp.active || powerUp.type !== 'shield') {
-        for (let i = 0; i < snake.length; i++) {
-            if (snake[i].x === head.x && snake[i].y === head.y) {
-                gameOver();
-                return;
-            }
-        }
-    }
-
-    snake.unshift(head);
-
-    let coinEaten = false;
-    if (head.x === coin.x && head.y === coin.y) {
-        score += 10;
-        coinsLeft--;
-        coinEaten = true;
-
-        if (!isMuted) sounds.eat.play().catch(e => console.log('Sound play failed:', e));
-
-        createParticles(coin.x, coin.y, 'gold');
-
-        if (coinsLeft === 0) {
-            levelUp();
-        } else {
-            placeCoin();
-
-            placeSpecialCoin();
-
-            placePowerUp();
-        }
-    }
-
-    if (specialCoin.active && head.x === specialCoin.x && head.y === specialCoin.y) {
-        score += 50;
-        specialCoin.active = false;
-        coinEaten = true;
-
-        if (!isMuted) sounds.eat.play().catch(e => console.log('Sound play failed:', e));
-
-        createParticles(specialCoin.x, specialCoin.y, 'magenta', 25);
-    }
-
-    if (powerUp.active && head.x === powerUp.x && head.y === powerUp.y) {
-        powerUp.active = true;
-        powerUp.duration = 300;
-
-        if (!isMuted) sounds.powerUp.play().catch(e => console.log('Sound play failed:', e));
-
-        if (powerUp.type === 'speed') {
-            gameSpeed = Math.max(30, gameSpeed - 50);
-        } else if (powerUp.type === 'slowdown') {
-            gameSpeed = gameSpeed + 50;
-        }
-
-        let color = powerUp.type === 'speed' ? 'cyan' :
-            (powerUp.type === 'slowdown' ? 'orange' : 'teal');
-        createParticles(powerUp.x, powerUp.y, color, 20);
-
-        powerUp.x = -1;
-        powerUp.y = -1;
-    }
-
-    if (!coinEaten) {
-        snake.pop();
-    }
-
-    if (specialCoin.active) {
-        specialCoin.timer--;
-        if (specialCoin.timer <= 0) {
-            specialCoin.active = false;
-        }
-    }
-
-    if (powerUp.duration > 0) {
-        powerUp.duration--;
-
-        if (powerUp.duration <= 0) {
-            if (powerUp.type === 'speed' || powerUp.type === 'slowdown') {
-                gameSpeed = Math.max(50, 150 - ((level - 1) * 10));
-            }
-            powerUp.active = false;
-            powerUp.type = null;
-        }
-    }
-
-    updateParticles();
-
-    updateScore();
-}
-
-
-function levelUp() {
-    level++;
-    coinsLeft = coinsPerLevel;
-    gameSpeed = Math.max(50, gameSpeed - 10);
-    sounds.levelUp.play();
-
-    for (let i = 0; i < 100; i++) {
-        const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
-        const colors = ['gold', 'green', 'cyan', 'magenta'];
-        createParticles(x, y, colors[Math.floor(Math.random() * colors.length)], 1);
-    }
-
-    placeCoin();
-
-    if (level > 2) {
-        placeSpecialCoin();
-    }
-
-    if (level > 3) {
-        placePowerUp();
-    }
-}
-
-function gameOver() {
-    cancelAnimationFrame(animationFrame);
-    gameRunning = false;
-    sounds.gameOver.play();
-
-    createParticles(snake[0].x, snake[0].y, 'red', 30);
-
-    let fadeIn = 0;
-    const fadeInterval = setInterval(() => {
-        fadeIn += 0.05;
-        if (fadeIn >= 0.75) {
-            clearInterval(fadeInterval);
-        }
-
-        ctx.fillStyle = `rgba(0, 0, 0, ${fadeIn})`;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        drawSnake();
-
-        ctx.fillStyle = 'red';
-        ctx.font = '30px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 40);
-
-        ctx.fillStyle = 'white';
-        ctx.font = '20px Arial';
-        ctx.fillText(`Score: ${score}`, canvas.width / 2, canvas.height / 2);
-        ctx.fillText(`Level: ${level}`, canvas.width / 2, canvas.height / 2 + 30);
-
-        if (score >= highScore) {
-            ctx.fillStyle = 'gold';
-            ctx.fillText(`New High Score!`, canvas.width / 2, canvas.height / 2 + 60);
-        } else {
-            ctx.fillStyle = 'silver';
-            ctx.fillText(`High Score: ${highScore}`, canvas.width / 2, canvas.height / 2 + 60);
-        }
-
-        updateParticles();
-        drawParticles();
-    }, 50);
-
-    startBtn.style.display = 'block';
-}
-
-function drawSnake() {
-    for (let i = 0; i < snake.length; i++) {
-        let greenValue = Math.max(100, 255 - (i * 5));
-
-        if (powerUp.active && powerUp.type === 'shield') {
-            const pulseIntensity = Math.sin(Date.now() * 0.01) * 30 + 170;
-            ctx.fillStyle = i === 0 ?
-                `rgb(100, ${greenValue}, 255)` :
-                `rgb(50, ${greenValue - 50}, ${pulseIntensity})`;
-        } else if (powerUp.active && powerUp.type === 'speed') {
-            ctx.fillStyle = i === 0 ?
-                `rgb(0, ${greenValue}, 255)` :
-                `rgb(0, ${greenValue}, ${Math.max(150, 220 - i * 15)})`;
-        } else if (powerUp.active && powerUp.type === 'slowdown') {
-            ctx.fillStyle = i === 0 ?
-                `rgb(${greenValue}, ${greenValue}, 0)` :
-                `rgb(${Math.max(100, greenValue - 50)}, ${greenValue - 100}, 0)`;
-        } else {
-            ctx.fillStyle = i === 0 ?
-                `rgb(50, 255, 50)` :
-                `rgb(0, ${greenValue}, 0)`;
-        }
-
-        roundRect(
-            ctx,
-            snake[i].x,
-            snake[i].y,
-            gridSize,
-            gridSize,
-            i === 0 ? 8 : 4,
-            true,
-            false
-        );
-
-        if (i === 0) {
-            ctx.fillStyle = 'white';
-
-            let eyePositions = [];
-            if (direction === 'right') {
-                eyePositions = [
-                    { x: snake[i].x + gridSize - 6, y: snake[i].y + 5 },
-                    { x: snake[i].x + gridSize - 6, y: snake[i].y + gridSize - 8 }
-                ];
-            } else if (direction === 'left') {
-                eyePositions = [
-                    { x: snake[i].x + 5, y: snake[i].y + 5 },
-                    { x: snake[i].x + 5, y: snake[i].y + gridSize - 8 }
-                ];
-            } else if (direction === 'up') {
-                eyePositions = [
-                    { x: snake[i].x + 5, y: snake[i].y + 5 },
-                    { x: snake[i].x + gridSize - 8, y: snake[i].y + 5 }
-                ];
-            } else if (direction === 'down') {
-                eyePositions = [
-                    { x: snake[i].x + 5, y: snake[i].y + gridSize - 8 },
-                    { x: snake[i].x + gridSize - 8, y: snake[i].y + gridSize - 8 }
-                ];
-            }
-
-            ctx.beginPath();
-            ctx.arc(eyePositions[0].x, eyePositions[0].y, 2, 0, 2 * Math.PI);
-            ctx.arc(eyePositions[1].x, eyePositions[1].y, 2, 0, 2 * Math.PI);
-            ctx.fill();
-
-            ctx.fillStyle = 'black';
-            ctx.beginPath();
-            ctx.arc(eyePositions[0].x, eyePositions[0].y, 1, 0, 2 * Math.PI);
-            ctx.arc(eyePositions[1].x, eyePositions[1].y, 1, 0, 2 * Math.PI);
-            ctx.fill();
-        }
-    }
-}
-
-function drawCoin() {
-    const pulse = Math.sin(Date.now() * 0.01) * 0.2 + 0.8;
-    const coinSize = gridSize * pulse;
-
-    ctx.fillStyle = 'gold';
-    ctx.beginPath();
-    ctx.arc(
-        coin.x + gridSize / 2,
-        coin.y + gridSize / 2,
-        coinSize / 2,
-        0,
-        2 * Math.PI
-    );
-    ctx.fill();
-
-    ctx.fillStyle = 'white';
-    ctx.beginPath();
-    ctx.arc(
-        coin.x + gridSize / 3,
-        coin.y + gridSize / 3,
-        coinSize / 6,
-        0,
-        2 * Math.PI
-    );
-    ctx.fill();
-}
-
-function drawSpecialCoin() {
-    if (!specialCoin.active) return;
-
-    const pulse = Math.sin(Date.now() * 0.02) * 0.3 + 1.0;
-    const coinSize = gridSize * pulse;
-
-    let coinColor = 'magenta';
-    if (specialCoin.timer < 50 && Math.sin(Date.now() * 0.1) > 0) {
-        coinColor = 'white';
-    }
-
-    ctx.fillStyle = coinColor;
-    ctx.beginPath();
-    ctx.arc(
-        specialCoin.x + gridSize / 2,
-        specialCoin.y + gridSize / 2,
-        coinSize / 2,
-        0,
-        2 * Math.PI
-    );
-    ctx.fill();
-
-    ctx.fillStyle = 'yellow';
-    drawStar(
-        specialCoin.x + gridSize / 2,
-        specialCoin.y + gridSize / 2,
-        5,
-        coinSize / 4,
-        coinSize / 8
-    );
-}
-
-function drawPowerUp() {
-    if (!powerUp.active || powerUp.x < 0 || powerUp.y < 0) return;
-
-    let powerUpColor = powerUp.type === 'speed' ? 'cyan' :
-        (powerUp.type === 'slowdown' ? 'orange' : 'teal');
-
-    const pulse = Math.sin(Date.now() * 0.015) * 0.2 + 0.9;
-    const powerUpSize = gridSize * pulse;
-
-    ctx.fillStyle = powerUpColor;
-    ctx.beginPath();
-
-    if (powerUp.type === 'speed') {
-        drawLightning(powerUp.x, powerUp.y);
-    } else if (powerUp.type === 'slowdown') {
-        drawClock(powerUp.x, powerUp.y);
-    } else if (powerUp.type === 'shield') {
-        drawShield(powerUp.x, powerUp.y);
-    }
-}
-
-function drawLightning(x, y) {
-    ctx.fillStyle = 'cyan';
-    ctx.beginPath();
-    ctx.moveTo(x + 8, y);
-    ctx.lineTo(x + 14, y);
-    ctx.lineTo(x + 10, y + 8);
-    ctx.lineTo(x + 14, y + 8);
-    ctx.lineTo(x + 6, y + 20);
-    ctx.lineTo(x + 8, y + 10);
-    ctx.lineTo(x + 4, y + 10);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-}
-
-function drawClock(x, y) {
-    ctx.fillStyle = 'orange';
-    ctx.beginPath();
-    ctx.arc(x + 10, y + 10, 8, 0, 2 * Math.PI);
-    ctx.fill();
-
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.strokeStyle = 'black';
-    ctx.beginPath();
-    ctx.moveTo(x + 10, y + 10);
-    ctx.lineTo(x + 10, y + 5);
-    ctx.moveTo(x + 10, y + 10);
-    ctx.lineTo(x + 14, y + 12);
-    ctx.stroke();
-}
-
-function drawShield(x, y) {
-    ctx.fillStyle = 'teal';
-    ctx.beginPath();
-    ctx.moveTo(x + 10, y);
-    ctx.lineTo(x + 18, y + 4);
-    ctx.lineTo(x + 18, y + 12);
-    ctx.lineTo(x + 10, y + 20);
-    ctx.lineTo(x + 2, y + 12);
-    ctx.lineTo(x + 2, y + 4);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.strokeStyle = 'white';
-    ctx.lineWidth = 1;
-    ctx.stroke();
-
-    ctx.strokeStyle = 'lightblue';
-    ctx.beginPath();
-    ctx.moveTo(x + 10, y + 4);
-    ctx.lineTo(x + 10, y + 16);
-    ctx.moveTo(x + 6, y + 8);
-    ctx.lineTo(x + 14, y + 8);
-    ctx.stroke();
-}
-
-function drawStar(cx, cy, spikes, outerRadius, innerRadius) {
-    let rot = Math.PI / 2 * 3;
-    let x = cx;
-    let y = cy;
-    let step = Math.PI / spikes;
-
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - outerRadius);
-
-    for (let i = 0; i < spikes; i++) {
-        x = cx + Math.cos(rot) * outerRadius;
-        y = cy + Math.sin(rot) * outerRadius;
-        ctx.lineTo(x, y);
-        rot += step;
-
-        x = cx + Math.cos(rot) * innerRadius;
-        y = cy + Math.sin(rot) * innerRadius;
-        ctx.lineTo(x, y);
-        rot += step;
-    }
-
-    ctx.lineTo(cx, cy - outerRadius);
-    ctx.closePath();
-    ctx.fill();
-}
-
-function drawParticles() {
-    for (let i = 0; i < particles.length; i++) {
-        ctx.globalAlpha = particles[i].life / 40;
-        ctx.fillStyle = particles[i].color;
-        ctx.beginPath();
-        ctx.arc(particles[i].x, particles[i].y, particles[i].size, 0, 2 * Math.PI);
-        ctx.fill();
-    }
-    ctx.globalAlpha = 1;
-}
-
-function drawPowerUpEffects() {
-    if (!powerUp.active || powerUp.duration <= 0) return;
-
-    ctx.fillStyle = 'white';
-    ctx.font = '12px Arial';
-    ctx.textAlign = 'left';
-
-    let effectText = '';
-    if (powerUp.type === 'speed') {
-        effectText = 'Speed Boost';
-        ctx.fillStyle = 'cyan';
-    } else if (powerUp.type === 'slowdown') {
-        effectText = 'Slowdown';
-        ctx.fillStyle = 'orange';
-    } else if (powerUp.type === 'shield') {
-        effectText = 'Shield';
-        ctx.fillStyle = 'teal';
-    }
-
-    ctx.fillText(`${effectText}: ${Math.ceil(powerUp.duration / 30)}s`, 10, canvas.height - 10);
-
-    const maxWidth = 100;
-    const width = (powerUp.duration / 300) * maxWidth;
-    ctx.fillRect(10, canvas.height - 5, width, 3);
-
-    if (powerUp.type === 'shield') {
-        ctx.strokeStyle = 'teal';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([5, 3]);
-        ctx.beginPath();
-        ctx.arc(snake[0].x + gridSize / 2, snake[0].y + gridSize / 2, gridSize + 2, 0, 2 * Math.PI);
-        ctx.stroke();
-        ctx.setLineDash([]);
-    }
-}
-
-function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
-    ctx.beginPath();
-    ctx.moveTo(x + radius, y);
-    ctx.arcTo(x + width, y, x + width, y + height, radius);
-    ctx.arcTo(x + width, y + height, x, y + height, radius);
-    ctx.arcTo(x, y + height, x, y, radius);
-    ctx.arcTo(x, y, x + width, y, radius);
-    ctx.closePath();
-    if (fill) ctx.fill();
-    if (stroke) ctx.stroke();
-}
-
-function drawGrid() {
-    ctx.strokeStyle = 'rgba(50, 50, 50, 0.2)';
-    ctx.lineWidth = 0.5;
-
-    for (let x = 0; x <= canvas.width; x += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-    }
-
-    for (let y = 0; y <= canvas.height; y += gridSize) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-    }
-}
-function draw() {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'black';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    if (showGrid) {
-        drawGrid();
-    }
-
-    drawParticles();
-
-    drawSnake();
-
-    drawCoin();
-    drawSpecialCoin();
-
-    drawPowerUp();
-
-    drawPowerUpEffects();
-
-    ctx.strokeStyle = 'rgba(100, 100, 100, 0.5)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(0, 0, canvas.width, canvas.height);
-}
-
-document.addEventListener('keydown', (event) => {
-    if (!gameRunning) {
-        if (event.key === 'Enter' || event.code === 'Space') {
-            initGame();
-            return;
-        }
-    }
-
-    if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(event.key)) {
-        event.preventDefault();
-    }
-
-    switch (event.key) {
+    switch (e.key) {
         case 'ArrowUp':
         case 'w':
         case 'W':
-            if (direction !== 'down') nextDirection = 'up';
+            changeDirection('up');
             break;
         case 'ArrowDown':
         case 's':
         case 'S':
-            if (direction !== 'up') nextDirection = 'down';
+            changeDirection('down');
             break;
         case 'ArrowLeft':
         case 'a':
         case 'A':
-            if (direction !== 'right') nextDirection = 'left';
+            changeDirection('left');
             break;
         case 'ArrowRight':
         case 'd':
         case 'D':
-            if (direction !== 'left') nextDirection = 'right';
+            changeDirection('right');
             break;
         case 'p':
         case 'P':
             togglePause();
             break;
     }
-});
+}
 
-let touchStartX = 0;
-let touchStartY = 0;
+function changeDirection(newDirection) {
+    if (isPaused) return;
 
-canvas.addEventListener('touchstart', (e) => {
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    e.preventDefault();
-});
-
-canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-});
-
-canvas.addEventListener('touchend', (e) => {
-    if (!gameRunning) {
-        initGame();
+    if (
+        (direction === 'up' && newDirection === 'down') ||
+        (direction === 'down' && newDirection === 'up') ||
+        (direction === 'left' && newDirection === 'right') ||
+        (direction === 'right' && newDirection === 'left')
+    ) {
         return;
     }
 
-    const touchEndX = e.changedTouches[0].clientX;
-    const touchEndY = e.changedTouches[0].clientY;
+    nextDirection = newDirection;
+}
 
-    const deltaX = touchEndX - touchStartX;
-    const deltaY = touchEndY - touchStartY;
+function handleTouchStart(e) {
+    swipeStartX = e.touches[0].clientX;
+    swipeStartY = e.touches[0].clientY;
 
-    if (Math.abs(deltaX) > Math.abs(deltaY)) {
-        if (deltaX > 20 && direction !== 'left') {
-            nextDirection = 'right';
-        } else if (deltaX < -20 && direction !== 'right') {
-            nextDirection = 'left';
+    createTouchFeedback(swipeStartX, swipeStartY);
+}
+
+function createTouchFeedback(x, y) {
+    const feedback = document.createElement('div');
+    feedback.className = 'touch-feedback';
+    feedback.style.left = x + 'px';
+    feedback.style.top = y + 'px';
+    document.body.appendChild(feedback);
+
+    setTimeout(() => {
+        document.body.removeChild(feedback);
+    }, 500);
+}
+
+function handleTouchMove(e) {
+    if (!swipeStartX || !swipeStartY || !isGameRunning) return;
+
+    const touchX = e.touches[0].clientX;
+    const touchY = e.touches[0].clientY;
+
+    const diffX = touchX - swipeStartX;
+    const diffY = touchY - swipeStartY;
+
+    if (Math.max(Math.abs(diffX), Math.abs(diffY)) < 20) return;
+
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX > 0) {
+            changeDirection('right');
+            showSwipeFeedback('right');
+        } else {
+            changeDirection('left');
+            showSwipeFeedback('left');
         }
     } else {
-        if (deltaY > 20 && direction !== 'up') {
-            nextDirection = 'down';
-        } else if (deltaY < -20 && direction !== 'down') {
-            nextDirection = 'up';
+        if (diffY > 0) {
+            changeDirection('down');
+            showSwipeFeedback('down');
+        } else {
+            changeDirection('up');
+            showSwipeFeedback('up');
         }
     }
 
-    e.preventDefault();
-});
+    swipeStartX = null;
+    swipeStartY = null;
+}
 
-let isPaused = false;
+function handleTouchEnd() {
+    swipeStartX = null;
+    swipeStartY = null;
+}
+
+function showSwipeFeedback(direction) {
+    const feedback = swipeFeedbacks[direction];
+    feedback.classList.add('swipe-feedback-active');
+
+    setTimeout(() => {
+        feedback.classList.remove('swipe-feedback-active');
+    }, 500);
+}
+
+function toggleSettings() {
+    settingsPanel.classList.toggle('settings-open');
+}
+
+function toggleDarkMode() {
+    darkMode = !darkMode;
+    document.body.classList.toggle('dark-mode');
+    localStorage.setItem('darkMode', darkMode);
+}
+
+function toggleMute() {
+    isMuted = !isMuted;
+    localStorage.setItem('isMuted', isMuted);
+    updateMuteButton();
+}
+
+function updateMuteButton() {
+    muteBtn.innerHTML = isMuted ? '🔇 Unmute' : '🔊 Mute';
+
+    for (const sound in sounds) {
+        sounds[sound].muted = isMuted;
+    }
+}
+
+function toggleGrid() {
+    showGrid = gridToggle.checked;
+    localStorage.setItem('showGrid', showGrid);
+    render();
+}
+
+function changeDifficulty() {
+    difficultyLevel = difficultySelect.value;
+    localStorage.setItem('difficulty', difficultyLevel);
+    updateGameSpeed();
+}
+
+function changeSnakeColor() {
+    snakeColor = snakeColorPicker.value;
+    localStorage.setItem('snakeColor', snakeColor);
+    render();
+}
+
 function togglePause() {
-    if (!gameRunning) return;
+    if (!isGameRunning) return;
 
     isPaused = !isPaused;
 
     if (isPaused) {
-        cancelAnimationFrame(animationFrame);
-
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-        ctx.fillStyle = 'white';
-        ctx.font = '30px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2 - 20);
-
-        ctx.font = '16px Arial';
-        ctx.fillText('Press P to resume', canvas.width / 2, canvas.height / 2 + 20);
+        clearInterval(interval);
+        drawPausedText();
     } else {
-        lastFrameTime = performance.now();
-        animationFrame = requestAnimationFrame(animateGame);
+        interval = setInterval(gameLoop, gameSpeed);
     }
 }
 
-startBtn.addEventListener('click', initGame);
+function startGame() {
+    snake = [];
+    direction = 'right';
+    nextDirection = 'right';
+    food = null;
+    obstacles = [];
+    coins = [];
+    powerups = [];
+    score = 0;
+    level = 1;
+    coinsLeft = 5;
+    isGameRunning = true;
+    isPaused = false;
+    gameOver = false;
 
-document.addEventListener('keydown', (e) => {
-    if (!gameRunning && (e.code === 'Space' || e.code === 'Enter')) {
-        initGame();
-    }
-});
+    gameOverlay.classList.remove('active');
 
-const muteBtn = document.getElementById('muteBtn');
-let isMuted = localStorage.getItem('snakeMuted') === 'true';
+    startBtn.style.display = 'none';
 
-function updateMuteState() {
-    Object.values(sounds).forEach(sound => {
-        sound.muted = isMuted;
-    });
+    initSnake();
 
-    muteBtn.textContent = isMuted ? '🔇 Unmute' : '🔊 Mute';
-    localStorage.setItem('snakeMuted', isMuted);
+    spawnFood();
+
+    clearInterval(interval);
+    interval = setInterval(gameLoop, gameSpeed);
+
+    updateDisplay();
 }
 
-muteBtn.addEventListener('click', () => {
-    isMuted = !isMuted;
-    updateMuteState();
-});
+function initSnake() {
+    snake = [];
+    const midPoint = Math.floor(GRID_COUNT / 2);
 
-updateMuteState();
-
-const darkModeToggle = document.getElementById('darkModeToggle');
-darkModeToggle.addEventListener('click', () => {
-    document.body.classList.toggle('dark-mode');
-
-    const isDarkMode = document.body.classList.contains('dark-mode');
-    localStorage.setItem('snakeDarkMode', isDarkMode);
-});
-
-const settingsBtn = document.getElementById('settingsBtn');
-const settingsPanel = document.getElementById('settingsPanel');
-
-settingsBtn.addEventListener('click', () => {
-    settingsPanel.classList.toggle('settings-open');
-});
-
-document.addEventListener('click', (e) => {
-    if (settingsPanel.classList.contains('settings-open') &&
-        !settingsPanel.contains(e.target) &&
-        e.target !== settingsBtn) {
-        settingsPanel.classList.remove('settings-open');
+    for (let i = 0; i < INITIAL_SNAKE_LENGTH; i++) {
+        snake.push({
+            x: midPoint - i,
+            y: midPoint
+        });
     }
-});
+}
 
-const difficultySelect = document.getElementById('difficulty');
-difficultySelect.addEventListener('change', () => {
-    const difficulty = difficultySelect.value;
-    localStorage.setItem('snakeDifficulty', difficulty);
+function spawnFood() {
+    let validPosition = false;
+    let newFood;
 
-    if (gameRunning) {
-        switch (difficulty) {
-            case 'easy':
-                gameSpeed = 170 - ((level - 1) * 5);
+    while (!validPosition) {
+        newFood = {
+            x: Math.floor(Math.random() * GRID_COUNT),
+            y: Math.floor(Math.random() * GRID_COUNT),
+            type: getRandomFoodType()
+        };
+
+        validPosition = isValidPosition(newFood);
+    }
+
+    food = newFood;
+
+    if (Math.random() < 0.1 && level > 1) {
+        spawnPowerup();
+    }
+
+    if (level > 1 && coinsLeft > 0 && Math.random() < 0.3) {
+        spawnCoin();
+    }
+
+    if (level > 2 && obstacles.length < level * 2 && Math.random() < 0.2) {
+        spawnObstacle();
+    }
+}
+
+function getRandomFoodType() {
+    const rand = Math.random();
+
+    if (rand < 0.1) {
+        return FOOD_TYPES.SPECIAL;
+    } else if (rand < 0.3) {
+        return FOOD_TYPES.BONUS;
+    } else {
+        return FOOD_TYPES.REGULAR;
+    }
+}
+
+function isValidPosition(pos) {
+    for (const segment of snake) {
+        if (segment.x === pos.x && segment.y === pos.y) {
+            return false;
+        }
+    }
+
+    for (const obstacle of obstacles) {
+        if (obstacle.x === pos.x && obstacle.y === pos.y) {
+            return false;
+        }
+    }
+
+    for (const coin of coins) {
+        if (coin.x === pos.x && coin.y === pos.y) {
+            return false;
+        }
+    }
+
+    for (const powerup of powerups) {
+        if (powerup.x === pos.x && powerup.y === pos.y) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+function spawnPowerup() {
+    let validPosition = false;
+    let newPowerup;
+
+    while (!validPosition) {
+        newPowerup = {
+            x: Math.floor(Math.random() * GRID_COUNT),
+            y: Math.floor(Math.random() * GRID_COUNT),
+            type: getRandomPowerupType()
+        };
+
+        validPosition = isValidPosition(newPowerup);
+    }
+
+    powerups.push(newPowerup);
+
+    setTimeout(() => {
+        const index = powerups.findIndex(p => p.x === newPowerup.x && p.y === newPowerup.y);
+        if (index !== -1) {
+            powerups.splice(index, 1);
+        }
+    }, 10000);
+}
+
+function getRandomPowerupType() {
+    const types = Object.values(POWERUP_TYPES);
+    return types[Math.floor(Math.random() * types.length)];
+}
+
+function spawnCoin() {
+    if (coinsLeft <= 0) return;
+
+    let validPosition = false;
+    let newCoin;
+
+    while (!validPosition) {
+        newCoin = {
+            x: Math.floor(Math.random() * GRID_COUNT),
+            y: Math.floor(Math.random() * GRID_COUNT)
+        };
+
+        validPosition = isValidPosition(newCoin);
+    }
+
+    coins.push(newCoin);
+
+    coinsLeft--;
+    updateDisplay();
+}
+
+function spawnObstacle() {
+    let validPosition = false;
+    let newObstacle;
+
+    while (!validPosition) {
+        newObstacle = {
+            x: Math.floor(Math.random() * GRID_COUNT),
+            y: Math.floor(Math.random() * GRID_COUNT)
+        };
+
+        const head = snake[0];
+        const distX = Math.abs(head.x - newObstacle.x);
+        const distY = Math.abs(head.y - newObstacle.y);
+
+        if (distX <= 2 && distY <= 2) {
+            validPosition = false;
+            continue;
+        }
+
+        validPosition = isValidPosition(newObstacle);
+    }
+
+    obstacles.push(newObstacle);
+}
+
+function gameLoop() {
+    if (isPaused) return;
+
+    moveSnake();
+
+    if (checkCollisions()) {
+        endGame();
+        return;
+    }
+
+    checkFood();
+
+    checkPowerups();
+
+    checkCoins();
+
+    render();
+}
+
+function moveSnake() {
+    direction = nextDirection;
+
+    const head = { ...snake[0] };
+
+    switch (direction) {
+        case 'up':
+            head.y--;
+            break;
+        case 'down':
+            head.y++;
+            break;
+        case 'left':
+            head.x--;
+            break;
+        case 'right':
+            head.x++;
+            break;
+    }
+
+    if (head.x < 0) head.x = GRID_COUNT - 1;
+    if (head.x >= GRID_COUNT) head.x = 0;
+    if (head.y < 0) head.y = GRID_COUNT - 1;
+    if (head.y >= GRID_COUNT) head.y = 0;
+
+    snake.unshift(head);
+
+    if (!food || head.x !== food.x || head.y !== food.y) {
+        snake.pop();
+    }
+}
+
+function checkCollisions() {
+    const head = snake[0];
+
+    for (let i = 1; i < snake.length; i++) {
+        if (head.x === snake[i].x && head.y === snake[i].y) {
+            if (powerupActive && powerupActive.type === POWERUP_TYPES.GHOST) {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    for (const obstacle of obstacles) {
+        if (head.x === obstacle.x && head.y === obstacle.y) {
+            if (powerupActive && powerupActive.type === POWERUP_TYPES.GHOST) {
+                return false;
+            }
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function checkFood() {
+    if (!food) return;
+
+    const head = snake[0];
+
+    if (head.x === food.x && head.y === food.y) {
+        score += food.type.value;
+        animateScoreUpdate();
+
+        playSound(food.type.value > 1 ? 'bonus' : 'eat');
+
+        food = null;
+        spawnFood();
+
+        checkLevelUp();
+
+        updateDisplay();
+    }
+}
+
+function checkPowerups() {
+    if (powerups.length === 0) return;
+
+    const head = snake[0];
+
+    for (let i = 0; i < powerups.length; i++) {
+        const powerup = powerups[i];
+
+        if (head.x === powerup.x && head.y === powerup.y) {
+            applyPowerup(powerup.type);
+
+            powerups.splice(i, 1);
+
+            playSound('powerup');
+
+            break;
+        }
+    }
+}
+
+function applyPowerup(type) {
+    if (powerupTimeout) {
+        clearTimeout(powerupTimeout);
+    }
+
+    powerupActive = type;
+
+    powerupIndicator.style.display = 'flex';
+    powerupIndicator.querySelector('.powerup-icon').textContent = type.icon;
+
+    let timeLeft = Math.floor(type.duration / 1000);
+    updatePowerupTimer(timeLeft);
+
+    const countdownInterval = setInterval(() => {
+        timeLeft--;
+        updatePowerupTimer(timeLeft);
+
+        if (timeLeft <= 0) {
+            clearInterval(countdownInterval);
+        }
+    }, 1000);
+
+    if (type === POWERUP_TYPES.SPEED) {
+        const originalSpeed = gameSpeed;
+        gameSpeed = gameSpeed / 2;
+
+        clearInterval(interval);
+        interval = setInterval(gameLoop, gameSpeed);
+
+        powerupTimeout = setTimeout(() => {
+            gameSpeed = originalSpeed;
+            clearInterval(interval);
+            if (isGameRunning && !isPaused) {
+                interval = setInterval(gameLoop, gameSpeed);
+            }
+            powerupActive = null;
+            powerupIndicator.style.display = 'none';
+            clearInterval(countdownInterval);
+        }, type.duration);
+    } else if (type === POWERUP_TYPES.SLOW) {
+        const originalSpeed = gameSpeed;
+        gameSpeed = gameSpeed * 1.5;
+
+        clearInterval(interval);
+        interval = setInterval(gameLoop, gameSpeed);
+
+        powerupTimeout = setTimeout(() => {
+            gameSpeed = originalSpeed;
+            clearInterval(interval);
+            if (isGameRunning && !isPaused) {
+                interval = setInterval(gameLoop, gameSpeed);
+            }
+            powerupActive = null;
+            powerupIndicator.style.display = 'none';
+            clearInterval(countdownInterval);
+        }, type.duration);
+    } else {
+        powerupTimeout = setTimeout(() => {
+            powerupActive = null;
+            powerupIndicator.style.display = 'none';
+            clearInterval(countdownInterval);
+        }, type.duration);
+    }
+}
+
+function updatePowerupTimer(seconds) {
+    powerupTimer.textContent = `${seconds}s`;
+}
+
+function checkCoins() {
+    if (coins.length === 0) return;
+
+    const head = snake[0];
+
+    for (let i = 0; i < coins.length; i++) {
+        const coin = coins[i];
+
+        if (powerupActive && powerupActive.type === POWERUP_TYPES.MAGNET) {
+            const distX = Math.abs(head.x - coin.x);
+            const distY = Math.abs(head.y - coin.y);
+
+            if (distX <= 2 && distY <= 2) {
+                score += 2;
+                animateScoreUpdate();
+
+                playSound('bonus');
+
+                coins.splice(i, 1);
+
+                updateDisplay();
+
                 break;
-            case 'normal':
-                gameSpeed = 150 - ((level - 1) * 10);
+            }
+        }
+
+        if (head.x === coin.x && head.y === coin.y) {
+            score += 2;
+            animateScoreUpdate();
+
+            playSound('bonus');
+
+            coins.splice(i, 1);
+            updateDisplay();
+
+            break;
+        }
+    }
+
+    if (coins.length === 0 && coinsLeft === 0) {
+        levelUp();
+    }
+}
+
+function checkLevelUp() {
+    if (score >= level * 10) {
+        levelUp();
+    }
+}
+
+function levelUp() {
+    level++;
+    coinsLeft = 5;
+
+    if (level > 2) {
+        spawnObstacle();
+    }
+
+    playSound('levelUp');
+
+    updateDisplay();
+}
+
+function playSound(soundName) {
+    if (isMuted) return;
+
+    try {
+        const sound = sounds[soundName];
+        if (sound) {
+            sound.currentTime = 0;
+            sound.play();
+        }
+    } catch (e) {
+        console.error("Error playing sound:", e);
+    }
+}
+
+function animateScoreUpdate() {
+    scoreElement.classList.add('score-updated');
+
+    setTimeout(() => {
+        scoreElement.classList.remove('score-updated');
+    }, 500);
+}
+
+function endGame() {
+    isGameRunning = false;
+    clearInterval(interval);
+
+    playSound('gameOver');
+
+    if (powerupTimeout) {
+        clearTimeout(powerupTimeout);
+        powerupActive = null;
+        powerupIndicator.style.display = 'none';
+    }
+
+    if (score > highScore) {
+        highScore = score;
+        localStorage.setItem('highScore', highScore);
+        highScoreElement.textContent = highScore;
+    }
+
+    overlayMessage.textContent = 'Game Over';
+    finalScore.textContent = `Score: ${score}`;
+    gameOverlay.classList.add('active');
+    gameOverlay.classList.add('game-over');
+
+    startBtn.style.display = 'block';
+    startBtn.textContent = 'Play Again';
+}
+
+function updateDisplay() {
+    scoreElement.textContent = score;
+    levelElement.textContent = level;
+    coinsLeftElement.textContent = coinsLeft;
+    highScoreElement.textContent = highScore;
+}
+
+function render() {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    if (showGrid) {
+        drawGrid();
+    }
+
+    drawSnake();
+
+    if (food) {
+        drawFood();
+    }
+
+    drawObstacles();
+
+    drawCoins();
+
+    drawPowerups();
+}
+
+
+function drawGrid() {
+    const cellSize = canvas.width / GRID_COUNT;
+
+    ctx.strokeStyle = '#222222';
+    ctx.lineWidth = 0.5;
+
+    for (let i = 0; i <= GRID_COUNT; i++) {
+        ctx.beginPath();
+        ctx.moveTo(i * cellSize, 0);
+        ctx.lineTo(i * cellSize, canvas.height);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(0, i * cellSize);
+        ctx.lineTo(canvas.width, i * cellSize);
+        ctx.stroke();
+    }
+}
+
+function drawSnake() {
+    const cellSize = canvas.width / GRID_COUNT;
+
+    for (let i = 0; i < snake.length; i++) {
+        const segment = snake[i];
+
+        if (i === 0) {
+            ctx.fillStyle = snakeColor;
+        } else {
+            const shade = 1 - (i / snake.length * 0.6);
+            ctx.fillStyle = adjustColorBrightness(snakeColor, shade);
+        }
+
+        if (powerupActive && powerupActive.type === POWERUP_TYPES.GHOST) {
+            ctx.globalAlpha = 0.6;
+        }
+
+        ctx.fillRect(segment.x * cellSize, segment.y * cellSize, cellSize, cellSize);
+
+        ctx.globalAlpha = 1;
+    }
+
+    if (snake.length > 0) {
+        const head = snake[0];
+        const eyeSize = cellSize / 5;
+        const eyeOffset = cellSize / 3;
+
+        ctx.fillStyle = '#FFFFFF';
+
+        switch (direction) {
+            case 'up':
+                ctx.fillRect(head.x * cellSize + eyeOffset - eyeSize, head.y * cellSize + eyeOffset, eyeSize, eyeSize);
+                ctx.fillRect(head.x * cellSize + cellSize - eyeOffset, head.y * cellSize + eyeOffset, eyeSize, eyeSize);
                 break;
-            case 'hard':
-                gameSpeed = 130 - ((level - 1) * 15);
+            case 'down':
+                ctx.fillRect(head.x * cellSize + eyeOffset - eyeSize, head.y * cellSize + cellSize - eyeOffset, eyeSize, eyeSize);
+                ctx.fillRect(head.x * cellSize + cellSize - eyeOffset, head.y * cellSize + cellSize - eyeOffset, eyeSize, eyeSize);
+                break;
+            case 'left':
+                ctx.fillRect(head.x * cellSize + eyeOffset, head.y * cellSize + eyeOffset - eyeSize, eyeSize, eyeSize);
+                ctx.fillRect(head.x * cellSize + eyeOffset, head.y * cellSize + cellSize - eyeOffset, eyeSize, eyeSize);
+                break;
+            case 'right':
+                ctx.fillRect(head.x * cellSize + cellSize - eyeOffset, head.y * cellSize + eyeOffset - eyeSize, eyeSize, eyeSize);
+                ctx.fillRect(head.x * cellSize + cellSize - eyeOffset, head.y * cellSize + cellSize - eyeOffset, eyeSize, eyeSize);
                 break;
         }
     }
-});
+}
 
-const savedDifficulty = localStorage.getItem('snakeDifficulty') || 'normal';
-difficultySelect.value = savedDifficulty;
+function drawFood() {
+    const cellSize = canvas.width / GRID_COUNT;
 
-const gridToggle = document.getElementById('gridToggle');
-let showGrid = localStorage.getItem('snakeShowGrid') === 'true';
-gridToggle.checked = showGrid;
+    ctx.fillStyle = food.type.color;
 
-gridToggle.addEventListener('change', () => {
-    showGrid = gridToggle.checked;
-    localStorage.setItem('snakeShowGrid', showGrid);
-});
+    const time = Date.now() / 500;
+    const pulse = 1 + Math.sin(time) * 0.1;
 
-function drawGrid() {
-    if (!showGrid) return;
+    const centerX = food.x * cellSize + cellSize / 2;
+    const centerY = food.y * cellSize + cellSize / 2;
+    const radius = (cellSize / 2) * pulse;
 
-    ctx.strokeStyle = 'rgba(50, 50, 50, 0.2)';
-    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.fill();
 
-    for (let x = 0; x <= canvas.width; x += gridSize) {
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    ctx.beginPath();
+    ctx.arc(centerX - radius / 3, centerY - radius / 3, radius / 4, 0, Math.PI * 2);
+    ctx.fill();
+}
+
+function drawObstacles() {
+    const cellSize = canvas.width / GRID_COUNT;
+
+    ctx.fillStyle = OBSTACLE_COLOR;
+
+    for (const obstacle of obstacles) {
+        ctx.fillRect(obstacle.x * cellSize, obstacle.y * cellSize, cellSize, cellSize);
+
+        ctx.strokeStyle = '#707070';
+        ctx.lineWidth = 1;
+
         ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
+        ctx.moveTo(obstacle.x * cellSize, obstacle.y * cellSize);
+        ctx.lineTo((obstacle.x + 1) * cellSize, (obstacle.y + 1) * cellSize);
         ctx.stroke();
-    }
 
-    for (let y = 0; y <= canvas.height; y += gridSize) {
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
+        ctx.moveTo((obstacle.x + 1) * cellSize, obstacle.y * cellSize);
+        ctx.lineTo(obstacle.x * cellSize, (obstacle.y + 1) * cellSize);
         ctx.stroke();
     }
 }
 
-function resizeCanvas() {
-    const gameContainer = document.querySelector('.game-container');
-    const containerWidth = gameContainer.clientWidth;
+function drawCoins() {
+    const cellSize = canvas.width / GRID_COUNT;
 
-    const newSize = Math.min(containerWidth - 20, 500);
-    const adjustedSize = Math.floor(newSize / gridSize) * gridSize;
+    ctx.fillStyle = COIN_COLOR;
 
-    canvas.width = adjustedSize;
-    canvas.height = adjustedSize;
+    for (const coin of coins) {
+        const centerX = coin.x * cellSize + cellSize / 2;
+        const centerY = coin.y * cellSize + cellSize / 2;
+        const radius = cellSize / 2.5;
 
-    if (!gameRunning) {
-        draw();
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#FFB700';
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, radius * 0.7, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = COIN_COLOR;
+
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.beginPath();
+        ctx.arc(centerX - radius / 3, centerY - radius / 3, radius / 3, 0, Math.PI * 2);
+        ctx.fill();
     }
 }
 
-window.addEventListener('resize', resizeCanvas);
+function drawPowerups() {
+    const cellSize = canvas.width / GRID_COUNT;
 
-resizeCanvas();
+    for (const powerup of powerups) {
+        const centerX = powerup.x * cellSize + cellSize / 2;
+        const centerY = powerup.y * cellSize + cellSize / 2;
+        const size = cellSize * 0.8;
 
-document.addEventListener('DOMContentLoaded', () => {
-    const savedDarkMode = localStorage.getItem('snakeDarkMode');
-    if (savedDarkMode === 'true') {
-        document.body.classList.add('dark-mode');
+        ctx.fillStyle = powerup.type.color;
+
+        const time = Date.now() / 300;
+        const pulse = 1 + Math.sin(time) * 0.1;
+
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, (size / 2) * pulse, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#000000';
+        ctx.font = `${cellSize * 0.6}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(powerup.type.icon, centerX, centerY);
+    }
+}
+
+function drawPausedText() {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = '30px Arial';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('PAUSED', canvas.width / 2, canvas.height / 2);
+    ctx.font = '16px Arial';
+    ctx.fillText('Press P to continue', canvas.width / 2, canvas.height / 2 + 40);
+}
+
+function adjustColorBrightness(hex, factor) {
+    let r = parseInt(hex.slice(1, 3), 16);
+    let g = parseInt(hex.slice(3, 5), 16);
+    let b = parseInt(hex.slice(5, 7), 16);
+
+    r = Math.min(255, Math.floor(r * factor));
+    g = Math.min(255, Math.floor(g * factor));
+    b = Math.min(255, Math.floor(b * factor));
+
+    return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+}
+
+window.onload = function () {
+    init();
+
+    overlayMessage.textContent = 'Snake Game';
+    finalScore.textContent = 'Press any key or click Start to begin';
+    gameOverlay.classList.add('active');
+
+    if (touchDevice) {
+        finalScore.textContent = 'Tap Start to begin';
+        touchHint.style.display = 'block';
+        mobileControls.style.display = 'flex';
     }
 
-    draw();
-});
+    adjustCanvasSize();
+};
