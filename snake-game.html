@@ -5,19 +5,71 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="snake-game.css">
     <title>Snake Game</title>
-    
 </head>
 <body>
     <div class="game-container">
-        <button class="dark-mode-toggle" id="darkModeToggle">Toggle Dark Mode</button>
-        <canvas id="gameCanvas" width="400" height="400"></canvas>
-        <div class="game-info">
-            <div>Score: <span id="score">0</span></div>
-            <div>Level: <span id="level">1</span></div>
-            <div>Coins Left: <span id="coinsLeft">5</span></div>
+        <div class="header">
+            <h1>Snake Game</h1>
+            <button class="settings-btn" id="settingsBtn">⚙️</button>
         </div>
-        <button class="start-btn" id="startBtn">Start Game</button>
+        
+        <div class="settings-panel" id="settingsPanel">
+            <h3>Settings</h3>
+            <div class="setting-row">
+                <label for="difficulty">Difficulty:</label>
+                <select id="difficulty">
+                    <option value="easy">Easy</option>
+                    <option value="normal" selected>Normal</option>
+                    <option value="hard">Hard</option>
+                </select>
+            </div>
+            <div class="setting-row">
+                <label for="gridToggle">Show Grid:</label>
+                <input type="checkbox" id="gridToggle" checked>
+            </div>
+            <div class="setting-row">
+                <button class="dark-mode-toggle" id="darkModeToggle">Toggle Dark Mode</button>
+            </div>
+            <div class="setting-row">
+                <button id="muteBtn">🔊 Mute</button>
+            </div>
+        </div>
+        
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        
+        <div class="game-info">
+            <div class="stat-box">
+                <div class="stat-label">Score</div>
+                <div class="stat-value" id="score">0</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Level</div>
+                <div class="stat-value" id="level">1</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Coins Left</div>
+                <div class="stat-value" id="coinsLeft">5</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">High Score</div>
+                <div class="stat-value" id="highScore">0</div>
+            </div>
+        </div>
+        
+        <button class="start-btn pulse-animation" id="startBtn">Start Game</button>
+        
+        <div class="controls-hint">
+            <p>Use arrow keys or WASD to control the snake. Press P to pause.</p>
+        </div>
+        
+        <div class="mobile-controls" id="mobileControls">
+            <button id="upBtn">↑</button>
+            <button id="leftBtn">←</button>
+            <button id="rightBtn">→</button>
+            <button id="downBtn">↓</button>
+        </div>
     </div>
+    
     <script src="snake-game.js"></script>
 </body>
 </html>
