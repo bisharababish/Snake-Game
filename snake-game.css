@@ -11,9 +11,7 @@ body {
     transition: background-color 0.3s, color 0.3s;
     overflow: hidden;
     touch-action: manipulation;
-    /* Improves touch responsiveness */
     -webkit-tap-highlight-color: transparent;
-    /* Removes tap highlight on mobile */
 }
 
 :root {
@@ -27,9 +25,9 @@ body {
     --header-color: #2E7D32;
     --settings-bg: #fff;
     --shadow-color: rgba(0, 0, 0, 0.2);
-    /* Added new variables for mobile enhancements */
-    --mobile-btn-size: 60px;
-    --mobile-btn-opacity: 0.8;
+    /* Reduced button size for mobile */
+    --mobile-btn-size: 50px;
+    --mobile-btn-opacity: 0.7;
 }
 
 .dark-mode {
@@ -56,6 +54,8 @@ body {
     border-radius: 10px;
     background-color: var(--bg-color);
     transition: background-color 0.3s;
+    margin: 0 auto;
+    /* Ensure centering */
 }
 
 .header {
@@ -82,9 +82,11 @@ canvas {
     transition: border-color 0.3s;
     max-width: 100%;
     image-rendering: pixelated;
-    /* Improves rendering of pixel art games */
     image-rendering: crisp-edges;
-    /* Alternative for some browsers */
+    display: block;
+    /* Ensures proper centering */
+    margin: 0 auto;
+    /* Center the canvas */
 }
 
 .game-info {
@@ -122,7 +124,8 @@ canvas {
 }
 
 .start-btn {
-    margin-top: 20px;
+    margin: 20px auto 0;
+    /* Center the button */
     padding: 12px 30px;
     background-color: var(--btn-bg);
     color: white;
@@ -133,6 +136,8 @@ canvas {
     font-weight: bold;
     box-shadow: 0 4px 6px var(--shadow-color);
     transition: background-color 0.3s, transform 0.2s, box-shadow 0.2s;
+    display: block;
+    /* Ensures proper centering */
 }
 
 .start-btn:hover {
@@ -172,7 +177,6 @@ canvas {
     color: var(--header-color);
     transition: transform 0.2s, color 0.3s;
     padding: 8px;
-    /* Larger touch target */
 }
 
 .settings-btn:hover {
@@ -259,13 +263,20 @@ select {
     transition: color 0.3s;
 }
 
-/* Completely redesigned mobile controls */
+/* Redesigned mobile controls with smaller buttons */
 .mobile-controls {
     display: none;
     position: relative;
-    width: 200px;
-    height: 200px;
-    margin: 20px auto 0;
+    width: 180px;
+    /* Reduced container size */
+    height: 180px;
+    /* Reduced container size */
+    margin: 15px auto 0;
+    /* Better centering */
+    left: 0;
+    /* Reset any previous positioning */
+    right: 0;
+    /* Reset any previous positioning */
 }
 
 .mobile-controls button {
@@ -276,15 +287,16 @@ select {
     border-radius: 50%;
     background-color: var(--btn-bg);
     color: white;
-    font-size: 1.8rem;
+    font-size: 1.5rem;
+    /* Reduced font size */
     display: flex;
     align-items: center;
     justify-content: center;
     opacity: var(--mobile-btn-opacity);
-    box-shadow: 0 4px 8px var(--shadow-color);
+    box-shadow: 0 3px 6px var(--shadow-color);
+    /* Lighter shadow */
     transition: transform 0.1s, opacity 0.2s, background-color 0.3s;
     will-change: transform;
-    /* Optimizes animations */
 }
 
 .mobile-controls button:active {
@@ -318,19 +330,42 @@ select {
 }
 
 @media (max-width: 600px) {
+    body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0;
+        height: 100vh;
+        width: 100vw;
+        overflow-y: auto;
+        /* Allow vertical scrolling if needed */
+        overscroll-behavior: none;
+        /* Prevent pull-to-refresh */
+    }
+
     .game-container {
         padding: 10px;
         border-radius: 8px;
-        margin: 0 5px;
+        margin: 0 auto;
+        /* Center horizontally */
+        max-width: 95vw;
+        /* Almost full width but with small margins */
+        position: relative;
+        top: 0;
+        /* Reset any top positioning */
+        transform: none;
+        /* Remove any transforms that might affect centering */
     }
 
     .header h1 {
-        font-size: 1.6rem;
+        font-size: 1.4rem;
+        /* Even smaller for very small screens */
     }
 
     .mobile-controls {
         display: block;
-        /* Changed from grid to use our new absolute positioning */
+        margin: 10px auto;
+        /* Ensure proper spacing */
     }
 
     .controls-hint {
@@ -349,48 +384,53 @@ select {
         font-size: 1rem;
     }
 
-    /* Added new swipe styles for visual feedback */
-    .swipe-overlay {
-        position: fixed;
-        pointer-events: none;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: 100;
-        opacity: 0;
-        transition: opacity 0.3s;
-    }
-
-    .swipe-overlay.active {
-        opacity: 0.1;
-    }
-
-    .swipe-overlay.up {
-        background: linear-gradient(to top, transparent, var(--btn-bg));
-    }
-
-    .swipe-overlay.down {
-        background: linear-gradient(to bottom, transparent, var(--btn-bg));
-    }
-
-    .swipe-overlay.left {
-        background: linear-gradient(to left, transparent, var(--btn-bg));
-    }
-
-    .swipe-overlay.right {
-        background: linear-gradient(to right, transparent, var(--btn-bg));
-    }
-
     /* Improved start button for mobile */
     .start-btn {
-        padding: 15px 35px;
-        font-size: 1.2rem;
-        border-radius: 30px;
+        padding: 12px 30px;
+        font-size: 1.1rem;
+        margin: 15px auto 0;
+        display: block;
+    }
+
+    /* Make canvas perfectly centered */
+    canvas {
+        margin: 0 auto;
+        display: block;
+        max-width: 100%;
+        height: auto;
+        box-sizing: border-box;
+    }
+
+    /* Ensure game info is centered and properly sized */
+    .game-info {
+        margin: 10px auto;
+        max-width: 100%;
+        box-sizing: border-box;
     }
 }
 
-/* Add smooth animation for game over and score updates */
+/* More responsive adjustments for very small screens */
+@media (max-width: 400px) {
+    :root {
+        --mobile-btn-size: 45px;
+        /* Even smaller buttons */
+    }
+
+    .mobile-controls {
+        width: 160px;
+        height: 160px;
+    }
+
+    .game-container {
+        padding: 8px;
+    }
+
+    .header h1 {
+        font-size: 1.3rem;
+    }
+}
+
+/* Animation effects */
 @keyframes scoreUpdate {
     0% {
         transform: scale(1);
@@ -425,24 +465,26 @@ select {
     animation: gameOver 0.8s ease-out;
 }
 
-/* Add special effects for food collection */
-@keyframes foodCollected {
+/* Better touch feedback */
+.touch-feedback {
+    position: absolute;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
+    transform: translate(-50%, -50%);
+    animation: touchFeedback 0.5s ease-out forwards;
+}
+
+@keyframes touchFeedback {
     0% {
-        opacity: 0;
-        transform: scale(2);
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(0);
     }
 
     100% {
-        opacity: 1;
-        transform: scale(1);
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(2);
     }
-}
-
-.food-effect {
-    position: absolute;
-    pointer-events: none;
-    font-size: 1.5rem;
-    color: var(--btn-bg);
-    z-index: 5;
-    animation: foodCollected 0.5s ease-out forwards;
 }
