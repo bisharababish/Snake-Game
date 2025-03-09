@@ -1,4 +1,4 @@
-# 🐍 Enhanced Snake Game
+# 🐍  Snake Game
 
 An advanced, feature-rich implementation of the classic Snake game with modern graphics, power-ups, and progression mechanics.
 
