@@ -119,13 +119,13 @@ function loadSettings() {
 function updateGameSpeed() {
     switch (difficultyLevel) {
         case 'easy':
-            gameSpeed = 180;
-            break;
-        case 'normal':
             gameSpeed = 150;
             break;
-        case 'hard':
+        case 'normal':
             gameSpeed = 130;
+            break;
+        case 'hard':
+            gameSpeed = 110;
             break;
         case 'extreme':
             gameSpeed = 80;
