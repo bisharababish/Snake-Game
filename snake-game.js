@@ -1015,40 +1015,6 @@ function drawGrid() {
     }
 }
 
-const mobileControls = document.getElementById('mobileControls');
-const upBtn = document.getElementById('upBtn');
-const downBtn = document.getElementById('downBtn');
-const leftBtn = document.getElementById('leftBtn');
-const rightBtn = document.getElementById('rightBtn');
-
-window.addEventListener('touchstart', () => {
-    mobileControls.style.display = 'grid';
-});
-
-window.addEventListener('mousemove', () => {
-    mobileControls.style.display = 'none';
-});
-
-upBtn.addEventListener('touchstart', (e) => {
-    if (direction !== 'down') nextDirection = 'up';
-    e.preventDefault();
-});
-
-downBtn.addEventListener('touchstart', (e) => {
-    if (direction !== 'up') nextDirection = 'down';
-    e.preventDefault();
-});
-
-leftBtn.addEventListener('touchstart', (e) => {
-    if (direction !== 'right') nextDirection = 'left';
-    e.preventDefault();
-});
-
-rightBtn.addEventListener('touchstart', (e) => {
-    if (direction !== 'left') nextDirection = 'right';
-    e.preventDefault();
-});
-
 function resizeCanvas() {
     const gameContainer = document.querySelector('.game-container');
     const containerWidth = gameContainer.clientWidth;
