@@ -81,6 +81,15 @@
         <div class="touch-hint" id="touchHint">
             Swipe to control the snake
         </div>
+
+        <div class="mobile-controls" id="mobileControls">
+            <button class="control-btn up-btn" id="upBtn">▲</button>
+            <div class="horizontal-controls">
+                <button class="control-btn left-btn" id="leftBtn">◄</button>
+                <button class="control-btn right-btn" id="rightBtn">►</button>
+            </div>
+            <button class="control-btn down-btn" id="downBtn">▼</button>
+        </div>
         
         <div class="powerup-indicator" id="powerupIndicator">
             <div class="powerup-icon">⚡</div>
@@ -96,57 +105,3 @@
     <script src="snake-game.js"></script>
 </body>
 </html>
-
-<!-- <button id="leaderboardBtn">Leaderboard</button>
-<button id="profileBtn">Profile</button>
-<button id="startBtn">Start Game</button>
-<button id="logoutBtn">Logout</button>
-<button id="guestPlayBtn">Play as Guest</button>
-<form id="registrationForm">
-  <input id="username" type="text" required>
-  <input id="email" type="email" required>
-  <input id="password" type="password" required>
-  <button type="submit">Register</button>
-</form>
-
-<div id="leaderboardPanel">
-     Tabs 
-    <div class="tabs">
-      <button class="tab-btn active" data-tab="global">Global</button>
-      <button class="tab-btn" data-tab="daily">Daily</button>
-      <button class="tab-btn" data-tab="weekly">Weekly</button>
-    </div>
-    
-     Tab content 
-    <div id="globalTab" class="tab-content active">
-      <table>
-        <tbody id="globalLeaderboard"></tbody>
-      </table>
-    </div>
-    <div id="dailyTab" class="tab-content">
-      <table>
-        <tbody id="dailyLeaderboard"></tbody>
-      </table>
-    </div>
-    <div id="weeklyTab" class="tab-content">
-      <table>
-        <tbody id="weeklyLeaderboard"></tbody>
-      </table>
-    </div>
-  </div>
-  
-  <div id="profilePanel">
-    <h2>Profile: <span id="profileUsername">Guest</span></h2>
-    <p>Best Score: <span id="profileBestScore">0</span></p>
-    <p>Games Played: <span id="profileGamesPlayed">0</span></p>
-    <p>Average Score: <span id="profileAvgScore">0</span></p>
-  </div>
-  
-  <div id="registrationModal">
-     Registration form goes here 
-  </div>
-
-  <div class="player-info">
-    <p>Rank: <span id="playerRank">--</span></p>
-    <p>Best: <span id="playerBest">0</span></p>
-  </div> -->
