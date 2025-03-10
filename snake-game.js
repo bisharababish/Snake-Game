@@ -168,10 +168,22 @@ function setupEventListeners() {
         setupTouchControls();
     }
 
-    upBtn.addEventListener('click', () => changeDirection('up'));
-    downBtn.addEventListener('click', () => changeDirection('down'));
-    leftBtn.addEventListener('click', () => changeDirection('left'));
-    rightBtn.addEventListener('click', () => changeDirection('right'));
+    upBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        changeDirection('up');
+    });
+    downBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        changeDirection('down');
+    });
+    leftBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        changeDirection('left');
+    });
+    rightBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        changeDirection('right');
+    });
 
     window.addEventListener('resize', adjustCanvasSize);
 
@@ -186,11 +198,22 @@ function setupTouchControls() {
     if (touchDevice) {
         touchHint.style.display = 'block';
         mobileControls.style.display = 'flex';
-    }
 
-    document.addEventListener('touchstart', handleTouchStart, false);
-    document.addEventListener('touchmove', handleTouchMove, false);
-    document.addEventListener('touchend', handleTouchEnd, false);
+        canvas.addEventListener('touchstart', function (e) {
+            e.preventDefault();
+            handleTouchStart(e);
+        }, { passive: false });
+
+        canvas.addEventListener('touchmove', function (e) {
+            e.preventDefault();
+            handleTouchMove(e);
+        }, { passive: false });
+
+        canvas.addEventListener('touchend', function (e) {
+            e.preventDefault();
+            handleTouchEnd(e);
+        }, { passive: false });
+    }
 }
 
 function adjustCanvasSize() {
@@ -271,6 +294,7 @@ function createTouchFeedback(x, y) {
 
 function handleTouchMove(e) {
     if (!swipeStartX || !swipeStartY || !isGameRunning) return;
+    e.preventDefault();
 
     const touchX = e.touches[0].clientX;
     const touchY = e.touches[0].clientY;
@@ -278,7 +302,7 @@ function handleTouchMove(e) {
     const diffX = touchX - swipeStartX;
     const diffY = touchY - swipeStartY;
 
-    if (Math.max(Math.abs(diffX), Math.abs(diffY)) < 20) return;
+    if (Math.max(Math.abs(diffX), Math.abs(diffY)) < 10) return;
 
     if (Math.abs(diffX) > Math.abs(diffY)) {
         if (diffX > 0) {
