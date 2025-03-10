@@ -1,23 +1,4 @@
-
-document.addEventListener('DOMContentLoaded', function () {
-    document.addEventListener('touchstart', function (e) {
-        if (e.target.nodeName === 'CANVAS') {
-            e.preventDefault();
-        }
-    }, { passive: false });
-
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function (e) {
-        const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
-            e.preventDefault();
-        }
-        lastTouchEnd = now;
-    }, { passive: false });
-
-    document.body.style.overscrollBehavior = 'none';
-});
-
+// Game constants
 const GRID_SIZE = 20;
 const GRID_COUNT = 20;
 const INITIAL_SNAKE_LENGTH = 3;
@@ -91,6 +72,10 @@ const swipeFeedbacks = {
     right: document.getElementById('swipeFeedbackRight')
 };
 
+const upBtn = document.getElementById('upBtn');
+const downBtn = document.getElementById('downBtn');
+const leftBtn = document.getElementById('leftBtn');
+const rightBtn = document.getElementById('rightBtn');
 
 const sounds = {
     eat: new Audio('https://assets.codepen.io/21542/pop-up-on.mp3'),
@@ -100,6 +85,7 @@ const sounds = {
     powerup: new Audio('https://assets.codepen.io/21542/notification-up.mp3')
 };
 
+// Initialize the game
 function init() {
     canvas = gameCanvas;
     ctx = canvas.getContext('2d');
@@ -116,12 +102,12 @@ function init() {
     snakeColorPicker.value = snakeColor;
 
     setupEventListeners();
-    setupTouchControls(); // Ensure this is called
 
     render();
 
     highScoreElement.textContent = highScore;
 }
+
 function loadSettings() {
     highScore = parseInt(localStorage.getItem('highScore')) || 0;
     showGrid = localStorage.getItem('showGrid') !== 'false';
@@ -163,6 +149,11 @@ function setupEventListeners() {
         setupTouchControls();
     }
 
+    upBtn.addEventListener('click', () => changeDirection('up'));
+    downBtn.addEventListener('click', () => changeDirection('down'));
+    leftBtn.addEventListener('click', () => changeDirection('left'));
+    rightBtn.addEventListener('click', () => changeDirection('right'));
+
     window.addEventListener('resize', adjustCanvasSize);
 
     document.addEventListener('touchmove', function (e) {
@@ -174,52 +165,14 @@ function setupEventListeners() {
 
 function setupTouchControls() {
     if (touchDevice) {
-        touchHint.style.display = 'block'; b
-
-        canvas.addEventListener('touchstart', function (e) {
-            e.preventDefault();
-            const touch = e.touches[0];
-            swipeStartX = touch.clientX;
-            swipeStartY = touch.clientY;
-        }, { passive: false });
-
-        canvas.addEventListener('touchmove', function (e) {
-            e.preventDefault();
-        }, { passive: false });
-
-        canvas.addEventListener('touchend', function (e) {
-            e.preventDefault();
-            const touch = e.changedTouches[0];
-            const touchEndX = touch.clientX;
-            const touchEndY = touch.clientY;
-
-            const diffX = touchEndX - swipeStartX;
-            const diffY = touchEndY - swipeStartY;
-
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX > 0) {
-                    changeDirection('right');
-                    showSwipeFeedback('right');
-                } else {
-                    changeDirection('left');
-                    showSwipeFeedback('left');
-                }
-            } else {
-                if (diffY > 0) {
-                    changeDirection('down');
-                    showSwipeFeedback('down');
-                } else {
-                    changeDirection('up');
-                    showSwipeFeedback('up');
-                }
-            }
-
-            swipeStartX = null;
-            swipeStartY = null;
-        }, { passive: false });
+        touchHint.style.display = 'block';
+        mobileControls.style.display = 'flex';
     }
-}
 
+    document.addEventListener('touchstart', handleTouchStart, false);
+    document.addEventListener('touchmove', handleTouchMove, false);
+    document.addEventListener('touchend', handleTouchEnd, false);
+}
 
 function adjustCanvasSize() {
     if (window.innerWidth < 500) {
@@ -299,7 +252,6 @@ function createTouchFeedback(x, y) {
 
 function handleTouchMove(e) {
     if (!swipeStartX || !swipeStartY || !isGameRunning) return;
-    e.preventDefault();
 
     const touchX = e.touches[0].clientX;
     const touchY = e.touches[0].clientY;
@@ -307,7 +259,7 @@ function handleTouchMove(e) {
     const diffX = touchX - swipeStartX;
     const diffY = touchY - swipeStartY;
 
-    if (Math.max(Math.abs(diffX), Math.abs(diffY)) < 10) return;
+    if (Math.max(Math.abs(diffX), Math.abs(diffY)) < 20) return;
 
     if (Math.abs(diffX) > Math.abs(diffY)) {
         if (diffX > 0) {
@@ -336,7 +288,15 @@ function handleTouchEnd() {
     swipeStartY = null;
 }
 
-showSwipeFeedback
+function showSwipeFeedback(direction) {
+    const feedback = swipeFeedbacks[direction];
+    feedback.classList.add('swipe-feedback-active');
+
+    setTimeout(() => {
+        feedback.classList.remove('swipe-feedback-active');
+    }, 500);
+}
+
 function toggleSettings() {
     settingsPanel.classList.toggle('settings-open');
 }
