@@ -601,8 +601,7 @@ input[type="color"] {
         font-size: 0.8rem;
     }
 
-    .start-btn,
-    #restartBtn {
+    .start-btn {
         display: none;
     }
 
@@ -625,7 +624,7 @@ input[type="color"] {
         padding: 15px;
     }
 
-    .game-overlay.active .message-container #restartBtn {
+    .game-overlay.active .message-container {
         display: block;
     }
 
