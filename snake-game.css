@@ -303,6 +303,7 @@ input[type="color"] {
     0% {
         opacity: 0.1;
     }
+
     100% {
         opacity: 0;
     }
@@ -546,11 +547,8 @@ input[type="color"] {
     }
 
     canvas {
-        margin: 0 auto;
-        display: block;
-        max-width: 100%;
-        height: auto;
-        box-sizing: border-box;
+        width: 90vw;
+        height: 90vw;
     }
 
     .game-info {

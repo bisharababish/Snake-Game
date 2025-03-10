@@ -149,11 +149,6 @@ function setupEventListeners() {
         setupTouchControls();
     }
 
-    upBtn.addEventListener('click', () => changeDirection('up'));
-    downBtn.addEventListener('click', () => changeDirection('down'));
-    leftBtn.addEventListener('click', () => changeDirection('left'));
-    rightBtn.addEventListener('click', () => changeDirection('right'));
-
     window.addEventListener('resize', adjustCanvasSize);
 
     document.addEventListener('touchmove', function (e) {
@@ -166,7 +161,6 @@ function setupEventListeners() {
 function setupTouchControls() {
     if (touchDevice) {
         touchHint.style.display = 'block';
-        mobileControls.style.display = 'flex';
     }
 
     document.addEventListener('touchstart', handleTouchStart, false);
