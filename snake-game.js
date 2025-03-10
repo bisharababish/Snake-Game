@@ -100,7 +100,6 @@ const sounds = {
     powerup: new Audio('https://assets.codepen.io/21542/notification-up.mp3')
 };
 
-// Initialize the game
 function init() {
     canvas = gameCanvas;
     ctx = canvas.getContext('2d');
@@ -117,12 +116,12 @@ function init() {
     snakeColorPicker.value = snakeColor;
 
     setupEventListeners();
+    setupTouchControls(); // Ensure this is called
 
     render();
 
     highScoreElement.textContent = highScore;
 }
-
 function loadSettings() {
     highScore = parseInt(localStorage.getItem('highScore')) || 0;
     showGrid = localStorage.getItem('showGrid') !== 'false';
@@ -175,14 +174,13 @@ function setupEventListeners() {
 
 function setupTouchControls() {
     if (touchDevice) {
-        touchHint.style.display = 'block';
-        mobileControls.style.display = 'flex';
+        touchHint.style.display = 'block'; b
 
         canvas.addEventListener('touchstart', function (e) {
             e.preventDefault();
             const touch = e.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
+            swipeStartX = touch.clientX;
+            swipeStartY = touch.clientY;
         }, { passive: false });
 
         canvas.addEventListener('touchmove', function (e) {
@@ -195,11 +193,10 @@ function setupTouchControls() {
             const touchEndX = touch.clientX;
             const touchEndY = touch.clientY;
 
-            const diffX = touchEndX - touchStartX;
-            const diffY = touchEndY - touchStartY;
+            const diffX = touchEndX - swipeStartX;
+            const diffY = touchEndY - swipeStartY;
 
             if (Math.abs(diffX) > Math.abs(diffY)) {
-                // Horizontal swipe
                 if (diffX > 0) {
                     changeDirection('right');
                     showSwipeFeedback('right');
@@ -208,7 +205,6 @@ function setupTouchControls() {
                     showSwipeFeedback('left');
                 }
             } else {
-                // Vertical swipe
                 if (diffY > 0) {
                     changeDirection('down');
                     showSwipeFeedback('down');
@@ -218,8 +214,8 @@ function setupTouchControls() {
                 }
             }
 
-            touchStartX = null;
-            touchStartY = null;
+            swipeStartX = null;
+            swipeStartY = null;
         }, { passive: false });
     }
 }
@@ -340,15 +336,7 @@ function handleTouchEnd() {
     swipeStartY = null;
 }
 
-function showSwipeFeedback(direction) {
-    const feedback = swipeFeedbacks[direction];
-    feedback.classList.add('swipe-feedback-active');
-
-    setTimeout(() => {
-        feedback.classList.remove('swipe-feedback-active');
-    }, 500);
-}
-
+showSwipeFeedback
 function toggleSettings() {
     settingsPanel.classList.toggle('settings-open');
 }
