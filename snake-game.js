@@ -201,20 +201,50 @@ function setupTouchControls() {
 
         canvas.addEventListener('touchstart', function (e) {
             e.preventDefault();
-            handleTouchStart(e);
+            const touch = e.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
         }, { passive: false });
 
         canvas.addEventListener('touchmove', function (e) {
             e.preventDefault();
-            handleTouchMove(e);
         }, { passive: false });
 
         canvas.addEventListener('touchend', function (e) {
             e.preventDefault();
-            handleTouchEnd(e);
+            const touch = e.changedTouches[0];
+            const touchEndX = touch.clientX;
+            const touchEndY = touch.clientY;
+
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                // Horizontal swipe
+                if (diffX > 0) {
+                    changeDirection('right');
+                    showSwipeFeedback('right');
+                } else {
+                    changeDirection('left');
+                    showSwipeFeedback('left');
+                }
+            } else {
+                // Vertical swipe
+                if (diffY > 0) {
+                    changeDirection('down');
+                    showSwipeFeedback('down');
+                } else {
+                    changeDirection('up');
+                    showSwipeFeedback('up');
+                }
+            }
+
+            touchStartX = null;
+            touchStartY = null;
         }, { passive: false });
     }
 }
+
 
 function adjustCanvasSize() {
     if (window.innerWidth < 500) {
