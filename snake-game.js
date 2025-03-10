@@ -1,4 +1,23 @@
-// Game constants
+
+document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('touchstart', function (e) {
+        if (e.target.nodeName === 'CANVAS') {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function (e) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+
+    document.body.style.overscrollBehavior = 'none';
+});
+
 const GRID_SIZE = 20;
 const GRID_COUNT = 20;
 const INITIAL_SNAKE_LENGTH = 3;
