@@ -91,10 +91,6 @@ const swipeFeedbacks = {
     right: document.getElementById('swipeFeedbackRight')
 };
 
-const upBtn = document.getElementById('upBtn');
-const downBtn = document.getElementById('downBtn');
-const leftBtn = document.getElementById('leftBtn');
-const rightBtn = document.getElementById('rightBtn');
 
 const sounds = {
     eat: new Audio('https://assets.codepen.io/21542/pop-up-on.mp3'),
@@ -167,23 +163,6 @@ function setupEventListeners() {
     if (touchDevice) {
         setupTouchControls();
     }
-
-    upBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        changeDirection('up');
-    });
-    downBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        changeDirection('down');
-    });
-    leftBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        changeDirection('left');
-    });
-    rightBtn.addEventListener('click', function (e) {
-        e.preventDefault();
-        changeDirection('right');
-    });
 
     window.addEventListener('resize', adjustCanvasSize);
 
