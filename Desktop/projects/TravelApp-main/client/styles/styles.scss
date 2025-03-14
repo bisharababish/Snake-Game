@@ -1,0 +1,128 @@
+/* Basic styles for Travel App */
+@use "sass:color";
+
+:root {
+    --primary-color: #3498db;
+    --secondary-color: #2ecc71;
+    --background-color: #f8f9fa;
+    --text-color: #333;
+    --header-color: #2c3e50;
+    --border-color: #ddd;
+    --shadow-color: rgba(0, 0, 0, 0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 30px;
+
+    h1 {
+        color: var(--header-color);
+        margin-bottom: 10px;
+    }
+}
+
+main {
+    max-width: 800px;
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px var(--shadow-color);
+    overflow: hidden;
+}
+
+section {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+
+    &:last-child {
+        border-bottom: none;
+    }
+
+    h2 {
+        color: var(--header-color);
+        margin-bottom: 15px;
+    }
+}
+
+#input-section {
+    display: flex;
+    flex-direction: column;
+
+    @media (min-width: 768px) {
+        flex-direction: row;
+        align-items: center;
+
+        h2 {
+            margin-right: 15px;
+            margin-bottom: 0;
+        }
+    }
+
+    input {
+        flex: 1;
+        padding: 10px;
+        border: 1px solid var(--border-color);
+        border-radius: 5px;
+        font-size: 16px;
+        margin-right: 10px;
+        margin-bottom: 10px;
+
+        @media (min-width: 768px) {
+            margin-bottom: 0;
+        }
+
+        &:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+    }
+
+    button {
+        padding: 10px 15px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+
+        &:hover {
+            background-color: color.adjust(#3498db, $lightness: -10%);
+        }
+    }
+}
+
+#weather-section {
+    p {
+        margin-bottom: 8px;
+    }
+
+    h2 {
+        font-size: 24px;
+        color: var(--primary-color);
+    }
+}
+
+#image-section {
+    img {
+        width: 100%;
+        height: 50vh;
+        border-radius: 5px;
+        margin-top: 10px;
+    }
+}
