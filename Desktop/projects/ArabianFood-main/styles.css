@@ -1,0 +1,267 @@
+body {
+    margin: 0;
+    padding: 0;
+    background-color: #33373a;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    position: relative;
+    background: url(images/background.jpg) no-repeat;
+    background-size: cover;
+
+}
+
+
+header {
+    display: flex;
+    align-items: center;
+    color: #fff;
+    padding: 20px;
+
+}
+
+.logo {
+    margin-left: 80px;
+    margin-right: 50px;
+}
+
+.logo img {
+    width: 160px;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    font-family: 'Courier New', Courier, monospace;
+    margin-right: auto;
+    font-weight: bold;
+
+}
+
+nav a {
+    text-decoration: none;
+    color: #fff;
+    margin: 0 20px;
+    position: relative;
+}
+
+nav a::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: transparent;
+    transition: width 0.3s, background-color 0.3s;
+}
+
+nav a:hover {
+    color: #c8a96a;
+    transition: 0.3s;
+}
+
+nav a:hover::after {
+    width: 100%;
+    background-color: #fff;
+}
+
+.active {
+    font-weight: bold;
+}
+
+.signup-btn {
+    background-color: transparent;
+    color: #c8a96a;
+    border: 1px solid #fff;
+    padding: 5px 10px;
+    border-radius: 10px;
+    letter-spacing: 4px;
+    overflow: hidden;
+    transition: 0.5s;
+    cursor: pointer;
+    border-color: #c8a96a;
+    margin-left: 1px;
+    margin-right: 65px;
+    width: 120px;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 15px;
+    font-weight: bold;
+}
+
+.signup-btn:hover {
+    background: #c8a96a;
+    color: white;
+    box-shadow: 0 0 5px #c8a96a,
+        0 0 25px #c8a96a,
+        0 0 50px #c8a96a,
+        0 0 200px #c8a96a;
+}
+
+
+
+#FoodLabel,
+#DrinksLabel,
+#SaladDesertsLabel {
+    color: white;
+    margin: 110px 50px 20px 250px;
+    transition: color 0.3s;
+    display: inline-block;
+    position: relative;
+}
+
+#FoodLabel::after,
+#DrinksLabel::after,
+#SaladDesertsLabel::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: transparent;
+    transition: width 0.3s, background-color 0.3s;
+}
+
+#FoodLabel:hover,
+#DrinksLabel:hover,
+#SaladDesertsLabel:hover {
+    color: #c8a96a;
+    transition: 0.3s;
+
+}
+
+#FoodLabel:hover::after,
+#DrinksLabel:hover::after,
+#SaladDesertsLabel:hover::after {
+    width: 100%;
+    background-color: #fff;
+}
+
+.LineUnder {
+    background-color: white;
+    width: 70%;
+    height: 2px;
+    margin: 20px 0;
+    margin-left: 250px;
+
+}
+
+.SaladAndDesertsImages,
+.DrinksImages,
+.FoodImages {
+    display: flex;
+    flex-wrap: wrap;
+    margin-left: 250px;
+
+
+}
+
+.SaladDeserts-item,
+.drink-item,
+.food-item {
+    display: flex;
+    align-items: center;
+    margin: 30px;
+    width: calc(25% - 40px);
+    /* Arrange 3 items per row with space in between */
+}
+
+.SaladDeserts-item img,
+.drink-item img,
+.food-item img {
+    width: 150px;
+    border-radius: 80px;
+    border: solid black 3px;
+    border-width: 0.5px;
+}
+
+.SaladDeserts-item span,
+.drink-item span,
+.food-item span {
+    color: white;
+    font-family: cursive;
+    margin-left: 20px;
+
+}
+
+/* Adding Order Pop Up */
+.model {
+    display: none;
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Adding Order Pop Up */
+.model-content {
+    background-color: #262a2b;
+    /* Match header background color */
+    margin: 15% auto;
+    padding: 20px;
+    border: 1px solid #fff;
+    /* White border */
+    width: 40%;
+    color: #fff;
+    /* Text color */
+    border-radius: 10px;
+    /* Rounded corners */
+}
+
+.close {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+    color: #fff;
+    /* Hover color */
+    text-decoration: none;
+    cursor: pointer;
+}
+
+#add-to-order-btn {
+    background-color: #c8a96a;
+    /* Button color */
+    color: white;
+    padding: 10px 20px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 16px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    /* Smooth transition */
+}
+
+#add-to-order-btn:hover {
+    background-color: #c8a96a;
+    /* Darker hover color */
+}
+
+#loggedInUser {
+    font-weight: bold;
+    color: #c8a96a;
+    margin: 10px;
+}
+
+footer {
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: none;
+    color: white;
+    text-align: center;
+    padding: 10px 0;
+}

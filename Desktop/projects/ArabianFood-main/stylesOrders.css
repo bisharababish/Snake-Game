@@ -1,0 +1,98 @@
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; 
+  position: relative;
+  background: url(images/background.jpg) no-repeat;
+  background-size:cover; 
+
+
+}
+
+.container {
+  width: 80%;
+  max-width: 800px;
+  background-color: transparent;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin: auto;
+  margin-top: 100px ;
+}
+
+h1 {
+  text-align: center;
+  color: #fff;
+  margin-bottom: 20px;
+}
+
+.category {
+  margin-bottom: 20px;
+}
+
+label {
+  font-weight: bold;
+  display: block;
+  color: white;
+  margin-bottom: 5px;
+}
+
+select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ced4da;
+  border-radius: 5px;
+  background-color: #ffffff;
+  font-size: 16px;
+  margin-top: 5px;
+}
+
+.submit-btn {
+  text-align: center;
+}
+
+.submit-btn button {
+  padding: 10px 20px;
+  background-color: #343a40;
+  color: #ffffff;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.submit-btn button:hover {
+  background-color: #555b62;
+}
+
+#addToCartMessage{
+  color: white;
+  margin-top: 10px;
+}
+
+
+
+
+#ViewOrder{
+  color: white;
+}
+#ViewOrdersLogin{
+  color: #0096FF;
+}
+#loggedInUser {
+  font-weight: bold;
+  color: #c8a96a;
+  margin: 10px;
+}
+
+footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  text-align: center;
+  color: white;
+  background-color: none;
+  padding: 10px;
+}
